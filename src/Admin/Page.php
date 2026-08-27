@@ -10,9 +10,9 @@ class Page {
         ?>
         <div class="wrap">
             <h1>
-                <img src="<?php echo esc_url( AGO_MONITOR_URL . 'assets/img/agolab.webp' ); ?>" alt="aGo Lab" style="height:28px;width:auto;vertical-align:middle;margin-right:8px">
+                <img src="<?php echo esc_url( AGOMONITOR_URL . 'assets/img/agolab.webp' ); ?>" alt="aGo Lab" style="height:28px;width:auto;vertical-align:middle;margin-right:8px">
                 <?php esc_html_e( 'aGo Monitor', 'ago-monitor' ); ?>
-                <span style="font-size:12px;color:#999;margin-left:8px">v<?php echo esc_html( AGO_MONITOR_VERSION ); ?></span>
+                <span style="font-size:12px;color:#999;margin-left:8px">v<?php echo esc_html( AGOMONITOR_VERSION ); ?></span>
             </h1>
 
             <div id="ago-monitor-status" style="display:none"></div>
@@ -20,45 +20,38 @@ class Page {
             <div class="ago-layout">
                 <div class="ago-main">
 
-                    <!-- System Info -->
                     <div class="ago-grid">
                         <div class="card ago-card ago-check-card" id="card-system">
                             <h3><?php esc_html_e( 'System Info', 'ago-monitor' ); ?></h3>
                             <div class="ago-card-body ago-loading"><?php esc_html_e( 'Loading...', 'ago-monitor' ); ?></div>
                         </div>
 
-                        <!-- SSL -->
                         <div class="card ago-card ago-check-card" id="card-ssl">
                             <h3><?php esc_html_e( 'SSL Certificate', 'ago-monitor' ); ?></h3>
                             <div class="ago-card-body ago-loading"><?php esc_html_e( 'Loading...', 'ago-monitor' ); ?></div>
                         </div>
 
-                        <!-- Database -->
                         <div class="card ago-card ago-check-card" id="card-database">
                             <h3><?php esc_html_e( 'Database', 'ago-monitor' ); ?></h3>
                             <div class="ago-card-body ago-loading"><?php esc_html_e( 'Loading...', 'ago-monitor' ); ?></div>
                         </div>
 
-                        <!-- Disk Usage -->
                         <div class="card ago-card ago-check-card" id="card-disk">
                             <h3><?php esc_html_e( 'Disk Usage', 'ago-monitor' ); ?></h3>
                             <div class="ago-card-body ago-loading"><?php esc_html_e( 'Loading...', 'ago-monitor' ); ?></div>
                         </div>
 
-                        <!-- Autoloaded Options -->
                         <div class="card ago-card ago-check-card" id="card-autoload">
                             <h3><?php esc_html_e( 'Autoloaded Options', 'ago-monitor' ); ?></h3>
                             <div class="ago-card-body ago-loading"><?php esc_html_e( 'Loading...', 'ago-monitor' ); ?></div>
                         </div>
 
-                        <!-- Pending Updates -->
                         <div class="card ago-card ago-check-card" id="card-updates">
                             <h3><?php esc_html_e( 'Pending Updates', 'ago-monitor' ); ?></h3>
                             <div class="ago-card-body ago-loading"><?php esc_html_e( 'Loading...', 'ago-monitor' ); ?></div>
                         </div>
                     </div>
 
-                    <!-- Cron Jobs (full width) -->
                     <div class="card ago-card" id="card-cron">
                         <h3 class="ago-collapsible" data-target="cron-table">
                             <?php esc_html_e( 'Cron Jobs', 'ago-monitor' ); ?>
@@ -69,7 +62,6 @@ class Page {
                         </div>
                     </div>
 
-                    <!-- 404 Log (full width) -->
                     <div class="card ago-card" id="card-404">
                         <h3>
                             <?php esc_html_e( '404 Log', 'ago-monitor' ); ?>
@@ -83,7 +75,6 @@ class Page {
                         </div>
                     </div>
 
-                    <!-- Settings -->
                     <div class="card ago-card" id="card-settings">
                         <h3><?php esc_html_e( 'Settings', 'ago-monitor' ); ?></h3>
                         <div class="ago-card-body">
@@ -140,10 +131,8 @@ class Page {
 
                 </div>
 
-                <!-- SIDEBAR -->
                 <div class="ago-sidebar">
 
-                    <!-- About -->
                     <div class="card ago-card">
                         <h3><?php esc_html_e( 'About', 'ago-monitor' ); ?></h3>
                         <p style="font-size:13px;color:#666">
@@ -157,9 +146,12 @@ class Page {
                             <li><?php esc_html_e( '404 error logger', 'ago-monitor' ); ?></li>
                             <li><?php esc_html_e( 'Weekly email health report', 'ago-monitor' ); ?></li>
                         </ul>
+                        <a href="https://ago.cl/herramientas/wordpress/ago-monitor/docs" class="button" target="_blank" rel="noopener" style="margin-top:8px">
+                            <span class="dashicons dashicons-book" style="margin-right:4px;vertical-align:text-bottom"></span>
+                            <?php esc_html_e( 'Documentation', 'ago-monitor' ); ?>
+                        </a>
                     </div>
 
-                    <!-- Donation -->
                     <div class="card ago-card ago-donation">
                         <h3><?php esc_html_e( 'Support Open Source', 'ago-monitor' ); ?></h3>
                         <p style="font-size:13px;color:#666">
@@ -179,10 +171,9 @@ class Page {
                         </p>
                     </div>
 
-                    <!-- Footer with logo -->
                     <div class="ago-footer">
                         <a href="https://ago.cl" target="_blank" rel="noopener" class="ago-footer-logo">
-                            <img src="<?php echo esc_url( AGO_MONITOR_URL . 'assets/img/agolab.webp' ); ?>" alt="aGo Lab" style="height:40px;width:auto">
+                            <img src="<?php echo esc_url( AGOMONITOR_URL . 'assets/img/agolab.webp' ); ?>" alt="aGo Lab" style="height:40px;width:auto">
                         </a>
                         <p>
                             <?php

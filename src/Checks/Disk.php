@@ -13,18 +13,18 @@ class Disk {
      * @return array{status: string, label: string, uploads_size: string, uploads_bytes: int, total_size: string, total_bytes: int}
      */
     public static function check(): array {
-        $uploads_bytes = get_transient( 'ago_monitor_disk_uploads' );
-        $total_bytes   = get_transient( 'ago_monitor_disk_total' );
+        $uploads_bytes = get_transient( 'agomonitor_disk_uploads' );
+        $total_bytes   = get_transient( 'agomonitor_disk_total' );
 
         if ( false === $uploads_bytes ) {
             $upload_dir    = wp_upload_dir();
             $uploads_bytes = self::dir_size( $upload_dir['basedir'] );
-            set_transient( 'ago_monitor_disk_uploads', $uploads_bytes, HOUR_IN_SECONDS );
+            set_transient( 'agomonitor_disk_uploads', $uploads_bytes, HOUR_IN_SECONDS );
         }
 
         if ( false === $total_bytes ) {
             $total_bytes = self::dir_size( ABSPATH );
-            set_transient( 'ago_monitor_disk_total', $total_bytes, HOUR_IN_SECONDS );
+            set_transient( 'agomonitor_disk_total', $total_bytes, HOUR_IN_SECONDS );
         }
 
         return [

@@ -11,7 +11,7 @@ class Logger404 {
      */
     public static function table(): string {
         global $wpdb;
-        return $wpdb->prefix . 'ago_monitor_404s';
+        return $wpdb->prefix . 'agomonitor_404s';
     }
 
     /**
@@ -66,9 +66,9 @@ class Logger404 {
         );
 
         // Auto-cleanup: delete entries older than 30 days (run once per day via transient).
-        if ( false === get_transient( 'ago_monitor_404_cleanup' ) ) {
+        if ( false === get_transient( 'agomonitor_404_cleanup' ) ) {
             self::clear_old();
-            set_transient( 'ago_monitor_404_cleanup', 1, DAY_IN_SECONDS );
+            set_transient( 'agomonitor_404_cleanup', 1, DAY_IN_SECONDS );
         }
     }
 

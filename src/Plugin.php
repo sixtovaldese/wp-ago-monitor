@@ -28,24 +28,24 @@ class Plugin {
         }
 
         // Weekly report cron handler.
-        add_action( 'ago_monitor_weekly_report', [ Report::class, 'send' ] );
+        add_action( 'agomonitor_weekly_report', [ Report::class, 'send' ] );
     }
 
     /* ───── Textdomain ───── */
 
     public function load_textdomain(): void {
-        load_plugin_textdomain( 'ago-monitor', false, dirname( plugin_basename( AGO_MONITOR_FILE ) ) . '/languages' );
+        load_plugin_textdomain( 'ago-monitor', false, dirname( plugin_basename( AGOMONITOR_FILE ) ) . '/languages' );
     }
 
     /* ───── Admin menu (smart pattern) ───── */
 
     public function register_admin_menu(): void {
-        if ( empty( $GLOBALS['admin_page_hooks']['ago-tools'] ) ) {
+        if ( empty( $GLOBALS['admin_page_hooks']['agolab-tools'] ) ) {
             add_menu_page(
                 __( 'aGo Tools', 'ago-monitor' ),
                 __( 'aGo Tools', 'ago-monitor' ),
                 'manage_options',
-                'ago-tools',
+                'agolab-tools',
                 '__return_null',
                 'dashicons-hammer',
                 81
@@ -53,15 +53,15 @@ class Plugin {
         }
 
         add_submenu_page(
-            'ago-tools',
+            'agolab-tools',
             __( 'aGo Monitor', 'ago-monitor' ),
             __( 'Monitor', 'ago-monitor' ),
             'manage_options',
-            'ago-monitor',
+            'agomonitor',
             [ Admin\Page::class, 'render' ]
         );
 
-        remove_submenu_page( 'ago-tools', 'ago-tools' );
+        remove_submenu_page( 'agolab-tools', 'agolab-tools' );
     }
 
     /* ───── REST routes ───── */
@@ -174,14 +174,14 @@ class Plugin {
             'autoload_warn_kb'    => max( 100, absint( $input['autoload_warn_kb'] ?? 800 ) ),
         ];
 
-        update_option( 'ago_monitor_settings', $settings );
+        update_option( 'agomonitor_settings', $settings );
 
         // Manage cron schedule.
-        $timestamp = wp_next_scheduled( 'ago_monitor_weekly_report' );
+        $timestamp = wp_next_scheduled( 'agomonitor_weekly_report' );
         if ( $settings['enable_weekly_report'] && ! $timestamp ) {
-            wp_schedule_event( time() + DAY_IN_SECONDS, 'weekly', 'ago_monitor_weekly_report' );
+            wp_schedule_event( time() + DAY_IN_SECONDS, 'weekly', 'agomonitor_weekly_report' );
         } elseif ( ! $settings['enable_weekly_report'] && $timestamp ) {
-            wp_unschedule_event( $timestamp, 'ago_monitor_weekly_report' );
+            wp_unschedule_event( $timestamp, 'agomonitor_weekly_report' );
         }
 
         return new \WP_REST_Response( [ 'saved' => true, 'settings' => $settings ] );
@@ -190,26 +190,26 @@ class Plugin {
     /* ───── Assets ───── */
 
     public function enqueue_assets( string $hook ): void {
-        if ( ! str_ends_with( $hook, '_page_ago-monitor' ) ) {
+        if ( ! str_ends_with( $hook, '_page_agomonitor' ) ) {
             return;
         }
 
         wp_enqueue_style(
-            'ago-monitor-admin',
-            AGO_MONITOR_URL . 'assets/css/admin.css',
+            'agomonitor-admin',
+            AGOMONITOR_URL . 'assets/css/admin.css',
             [],
-            AGO_MONITOR_VERSION
+            AGOMONITOR_VERSION
         );
 
         wp_enqueue_script(
-            'ago-monitor-admin',
-            AGO_MONITOR_URL . 'assets/js/admin.js',
+            'agomonitor-admin',
+            AGOMONITOR_URL . 'assets/js/admin.js',
             [],
-            AGO_MONITOR_VERSION,
+            AGOMONITOR_VERSION,
             true
         );
 
-        wp_localize_script( 'ago-monitor-admin', 'agoMonitor', [
+        wp_localize_script( 'agomonitor-admin', 'agomonitorData', [
             'restUrl'  => rest_url( 'ago-monitor/v1' ),
             'nonce'    => wp_create_nonce( 'wp_rest' ),
             'settings' => self::get_settings(),
@@ -235,7 +235,7 @@ class Plugin {
             'report_email'         => '',
             'autoload_warn_kb'     => 800,
         ];
-        $saved = get_option( 'ago_monitor_settings', [] );
+        $saved = get_option( 'agomonitor_settings', [] );
         return wp_parse_args( $saved, $defaults );
     }
 

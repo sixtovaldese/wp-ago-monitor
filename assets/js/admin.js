@@ -1,16 +1,13 @@
-/* aGo Monitor Admin JS */
 (function () {
     'use strict';
 
-    if (typeof agoMonitor === 'undefined') return;
+    if (typeof agomonitorData === 'undefined') return;
 
-    var REST = agoMonitor.restUrl;
-    var NONCE = agoMonitor.nonce;
-    var i18n = agoMonitor.i18n;
-    var settings = agoMonitor.settings;
+    var REST = agomonitorData.restUrl;
+    var NONCE = agomonitorData.nonce;
+    var i18n = agomonitorData.i18n;
+    var settings = agomonitorData.settings;
     var current404Page = 1;
-
-    /* ───── Helpers ───── */
 
     function api(endpoint, opts) {
         opts = opts || {};
@@ -48,8 +45,6 @@
         el.textContent = msg;
         setTimeout(function () { el.style.display = 'none'; }, 4000);
     }
-
-    /* ───── Load Checks ───── */
 
     function loadChecks() {
         api('/checks').then(function (data) {
@@ -146,13 +141,10 @@
             ? ' ' + statusBadge('warning', cron.overdue + ' overdue')
             : ' ' + statusBadge('ok', cron.total + ' events');
 
-        // Preserve the caret
         var caret = h3.querySelector('.ago-caret');
         h3.innerHTML = 'Cron Jobs ' + badge + ' ';
         if (caret) h3.appendChild(caret);
     }
-
-    /* ───── Load Cron Table ───── */
 
     function loadCronTable() {
         var container = $('cron-table');
@@ -179,8 +171,6 @@
             container.innerHTML = html;
         });
     }
-
-    /* ───── Load 404 Log ───── */
 
     function load404s(page) {
         current404Page = page || 1;
@@ -210,7 +200,6 @@
             html += '</tbody></table>';
             container.innerHTML = html;
 
-            // Pagination.
             if (data.pages > 1) {
                 var pHtml = '';
                 for (var p = 1; p <= data.pages; p++) {
@@ -233,8 +222,6 @@
         });
     }
 
-    /* ───── Collapsible ───── */
-
     document.querySelectorAll('.ago-collapsible').forEach(function (header) {
         header.addEventListener('click', function () {
             var targetId = this.getAttribute('data-target');
@@ -245,7 +232,6 @@
             if (target.style.display === 'none') {
                 target.style.display = 'block';
                 if (caret) caret.classList.add('open');
-                // Load cron table on first open.
                 if (targetId === 'cron-table' && target.querySelector('.ago-loading')) {
                     loadCronTable();
                 }
@@ -255,8 +241,6 @@
             }
         });
     });
-
-    /* ───── Settings ───── */
 
     function hydrateSettings() {
         document.querySelectorAll('[data-setting]').forEach(function (el) {
@@ -300,8 +284,6 @@
         });
     }
 
-    /* ───── Send Report ───── */
-
     var reportBtn = $('ago-send-report');
     if (reportBtn) {
         reportBtn.addEventListener('click', function () {
@@ -319,8 +301,6 @@
         });
     }
 
-    /* ───── Clear 404 ───── */
-
     var clearBtn = $('ago-clear-404');
     if (clearBtn) {
         clearBtn.addEventListener('click', function () {
@@ -333,8 +313,6 @@
             });
         });
     }
-
-    /* ───── Init ───── */
 
     hydrateSettings();
     loadChecks();
