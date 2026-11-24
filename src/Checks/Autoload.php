@@ -16,6 +16,7 @@ class Autoload {
     public static function check(): array {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- a live measurement; no API returns the autoloaded size.
         $bytes = (int) $wpdb->get_var(
             "SELECT SUM(LENGTH(option_value)) FROM {$wpdb->options} WHERE autoload IN ('yes', 'on', 'auto')"
         );

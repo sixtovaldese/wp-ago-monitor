@@ -38,10 +38,8 @@ class Report {
             'system', 'ssl', 'db', 'disk', 'autoload', 'cron', 'updates', 'count404', 'site_name', 'site_url'
         ) );
 
-        $headers = [
-            'Content-Type: text/html; charset=UTF-8',
-            'From: aGo Monitor <' . get_option( 'admin_email' ) . '>',
-        ];
+        // The sender is left to WordPress and the site mail setup, which know an address the server may send from.
+        $headers = [ 'Content-Type: text/html; charset=UTF-8' ];
 
         return wp_mail( $to, $subject, $html, $headers );
     }
@@ -50,11 +48,11 @@ class Report {
      * Build HTML email body.
      */
     private static function build_html( array $data ): string {
-        $status_icon = fn( string $status ) => match ( $status ) {
-            'ok'      => '&#9989;',
-            'warning' => '&#9888;&#65039;',
-            'error'   => '&#10060;',
-            default   => '&#8226;',
+        $status_icon = static fn( string $status ): string => match ( $status ) {
+            'ok'      => '<strong style="color:#1e7e34">' . esc_html__( 'OK', 'ago-monitor' ) . '</strong>',
+            'warning' => '<strong style="color:#b26a00">' . esc_html__( 'Warning', 'ago-monitor' ) . '</strong>',
+            'error'   => '<strong style="color:#c62828">' . esc_html__( 'Error', 'ago-monitor' ) . '</strong>',
+            default   => '',
         };
 
         $updates_count = count( $data['updates'] );
@@ -72,11 +70,11 @@ class Report {
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
-<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#1d2327;background:#f9f9f9">
+<body style="font-family:-apple-system,BlinkMacSystemFont,Roboto,Helvetica,Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#1d2327;background:#f9f9f9">
 
 <div style="background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:24px;margin-bottom:16px">
     <h1 style="font-size:20px;margin:0 0 4px"><?php echo esc_html( $data['site_name'] ); ?></h1>
-    <p style="color:#666;margin:0 0 20px;font-size:13px"><?php esc_html_e( 'Weekly Health Report', 'ago-monitor' ); ?> &mdash; <?php echo esc_html( wp_date( 'F j, Y' ) ); ?></p>
+    <p style="color:#666;margin:0 0 20px;font-size:13px"><?php esc_html_e( 'Weekly Health Report', 'ago-monitor' ); ?>, <?php echo esc_html( wp_date( get_option( 'date_format' ) ) ); ?></p>
 
     <table style="width:100%;border-collapse:collapse;font-size:14px">
         <tr style="border-bottom:1px solid #eee">
@@ -96,8 +94,8 @@ class Report {
             <td style="padding:10px 8px"><?php echo esc_html( $data['db']['size'] ); ?> (<?php echo (int) $data['db']['table_count']; ?> <?php esc_html_e( 'tables', 'ago-monitor' ); ?>)</td>
         </tr>
         <tr style="border-bottom:1px solid #eee">
-            <td style="padding:10px 8px;font-weight:600"><?php esc_html_e( 'Disk Usage', 'ago-monitor' ); ?></td>
-            <td style="padding:10px 8px"><?php esc_html_e( 'Uploads:', 'ago-monitor' ); ?> <?php echo esc_html( $data['disk']['uploads_size'] ); ?> &mdash; <?php esc_html_e( 'Total:', 'ago-monitor' ); ?> <?php echo esc_html( $data['disk']['total_size'] ); ?></td>
+            <td style="padding:10px 8px;font-weight:600"><?php esc_html_e( 'Folder Sizes', 'ago-monitor' ); ?></td>
+            <td style="padding:10px 8px"><?php esc_html_e( 'Uploads folder:', 'ago-monitor' ); ?> <?php echo esc_html( $data['disk']['uploads_size'] ); ?><br><?php esc_html_e( 'WordPress folder:', 'ago-monitor' ); ?> <?php echo esc_html( $data['disk']['total_size'] ); ?></td>
         </tr>
         <tr style="border-bottom:1px solid #eee">
             <td style="padding:10px 8px;font-weight:600"><?php esc_html_e( 'Autoloaded Options', 'ago-monitor' ); ?></td>
@@ -124,6 +122,10 @@ class Report {
     </div>
     <?php endif; ?>
 </div>
+
+<p style="text-align:center;font-size:12px;color:#999">
+    <?php esc_html_e( 'These values are measured by the site itself when the email is built. If the site is down or WP-Cron does not run, this email is not sent, so its absence can be a warning sign too.', 'ago-monitor' ); ?>
+</p>
 
 <p style="text-align:center;font-size:12px;color:#999">
     <?php

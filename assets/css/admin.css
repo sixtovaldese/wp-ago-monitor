@@ -350,6 +350,10 @@
     margin-right: 8px;
 }
 
+.ago-links li::before {
+    content: none;
+}
+
 .ago-donation {
     text-align: center;
 }

@@ -8,6 +8,10 @@ class Plugin {
 
     private static ?self $instance = null;
 
+    private const REST_NAMESPACE = 'agomonitor/v1';
+
+    private const MENU_SLUG = 'agomonitor-tools';
+
     public static function instance(): self {
         if ( null === self::$instance ) {
             self::$instance = new self();
@@ -16,7 +20,6 @@ class Plugin {
     }
 
     private function __construct() {
-        add_action( 'init', [ $this, 'load_textdomain' ] );
         add_action( 'admin_menu', [ $this, 'register_admin_menu' ] );
         add_action( 'rest_api_init', [ $this, 'register_rest_routes' ] );
         add_action( 'admin_enqueue_scripts', [ $this, 'enqueue_assets' ] );
@@ -31,21 +34,35 @@ class Plugin {
         add_action( 'agomonitor_weekly_report', [ Report::class, 'send' ] );
     }
 
-    /* ───── Textdomain ───── */
+    /* ───── Admin menu ───── */
 
-    public function load_textdomain(): void {
-        load_plugin_textdomain( 'ago-monitor', false, dirname( plugin_basename( AGOMONITOR_FILE ) ) . '/languages' );
+    /**
+     * The database size, the WordPress folder size and the cron list cover the
+     * whole installation, so on multisite they are shown only to those who
+     * manage the network.
+     */
+    public static function capability(): string {
+        return is_multisite() ? 'manage_network_options' : 'manage_options';
     }
 
-    /* ───── Admin menu (smart pattern) ───── */
-
     public function register_admin_menu(): void {
-        if ( empty( $GLOBALS['admin_page_hooks']['agolab-tools'] ) ) {
+        /*
+         * Other plugins from the same author may already have added a shared
+         * parent menu. When one is there the page goes under it, so the
+         * dashboard does not grow a second top level entry for the same set of
+         * tools. When there is none, this plugin creates its own parent under
+         * its own prefix and never defines the shared slug.
+         */
+        $parent = 'agolab-tools';
+
+        if ( empty( $GLOBALS['admin_page_hooks'][ $parent ] ) ) {
+            $parent = self::MENU_SLUG;
+
             add_menu_page(
                 __( 'aGo Tools', 'ago-monitor' ),
                 __( 'aGo Tools', 'ago-monitor' ),
-                'manage_options',
-                'agolab-tools',
+                self::capability(),
+                $parent,
                 '__return_null',
                 'dashicons-hammer',
                 81
@@ -53,33 +70,31 @@ class Plugin {
         }
 
         add_submenu_page(
-            'agolab-tools',
+            $parent,
             __( 'aGo Monitor', 'ago-monitor' ),
             __( 'Monitor', 'ago-monitor' ),
-            'manage_options',
+            self::capability(),
             'agomonitor',
             [ Admin\Page::class, 'render' ]
         );
 
-        remove_submenu_page( 'agolab-tools', 'agolab-tools' );
+        remove_submenu_page( $parent, $parent );
     }
 
     /* ───── REST routes ───── */
 
     public function register_rest_routes(): void {
-        $admin_permission = function () {
-            return current_user_can( 'manage_options' );
-        };
+        $admin_permission = static fn (): bool => current_user_can( self::capability() );
 
         // GET all checks.
-        register_rest_route( 'ago-monitor/v1', '/checks', [
+        register_rest_route( self::REST_NAMESPACE, '/checks', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'handle_get_checks' ],
             'permission_callback' => $admin_permission,
         ] );
 
         // GET 404 log.
-        register_rest_route( 'ago-monitor/v1', '/404s', [
+        register_rest_route( self::REST_NAMESPACE, '/404s', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'handle_get_404s' ],
             'permission_callback' => $admin_permission,
@@ -90,28 +105,28 @@ class Plugin {
         ] );
 
         // POST clear 404 log.
-        register_rest_route( 'ago-monitor/v1', '/404s/clear', [
+        register_rest_route( self::REST_NAMESPACE, '/404s/clear', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_clear_404s' ],
             'permission_callback' => $admin_permission,
         ] );
 
         // GET cron jobs.
-        register_rest_route( 'ago-monitor/v1', '/cron', [
+        register_rest_route( self::REST_NAMESPACE, '/cron', [
             'methods'             => 'GET',
             'callback'            => [ $this, 'handle_get_cron' ],
             'permission_callback' => $admin_permission,
         ] );
 
         // POST send report now.
-        register_rest_route( 'ago-monitor/v1', '/report/send', [
+        register_rest_route( self::REST_NAMESPACE, '/report/send', [
             'methods'             => 'POST',
             'callback'            => [ $this, 'handle_send_report' ],
             'permission_callback' => $admin_permission,
         ] );
 
         // GET / POST settings.
-        register_rest_route( 'ago-monitor/v1', '/settings', [
+        register_rest_route( self::REST_NAMESPACE, '/settings', [
             [
                 'methods'             => 'GET',
                 'callback'            => [ $this, 'handle_get_settings' ],
@@ -166,22 +181,21 @@ class Plugin {
     }
 
     public function handle_save_settings( \WP_REST_Request $request ): \WP_REST_Response {
-        $input    = $request->get_json_params();
+        $input    = (array) $request->get_json_params();
         $settings = [
-            'enable_404_logging'  => ! empty( $input['enable_404_logging'] ),
+            'enable_404_logging'   => ! empty( $input['enable_404_logging'] ),
             'enable_weekly_report' => ! empty( $input['enable_weekly_report'] ),
-            'report_email'        => sanitize_email( $input['report_email'] ?? '' ),
-            'autoload_warn_kb'    => max( 100, absint( $input['autoload_warn_kb'] ?? 800 ) ),
+            'report_email'         => sanitize_email( wp_unslash( (string) ( $input['report_email'] ?? '' ) ) ),
+            'autoload_warn_kb'     => max( 100, absint( $input['autoload_warn_kb'] ?? 800 ) ),
         ];
 
         update_option( 'agomonitor_settings', $settings );
 
-        // Manage cron schedule.
         $timestamp = wp_next_scheduled( 'agomonitor_weekly_report' );
         if ( $settings['enable_weekly_report'] && ! $timestamp ) {
             wp_schedule_event( time() + DAY_IN_SECONDS, 'weekly', 'agomonitor_weekly_report' );
-        } elseif ( ! $settings['enable_weekly_report'] && $timestamp ) {
-            wp_unschedule_event( $timestamp, 'agomonitor_weekly_report' );
+        } elseif ( ! $settings['enable_weekly_report'] ) {
+            wp_clear_scheduled_hook( 'agomonitor_weekly_report' );
         }
 
         return new \WP_REST_Response( [ 'saved' => true, 'settings' => $settings ] );
@@ -210,17 +224,53 @@ class Plugin {
         );
 
         wp_localize_script( 'agomonitor-admin', 'agomonitorData', [
-            'restUrl'  => rest_url( 'ago-monitor/v1' ),
+            'restUrl'  => rest_url( self::REST_NAMESPACE ),
             'nonce'    => wp_create_nonce( 'wp_rest' ),
             'settings' => self::get_settings(),
             'i18n'     => [
-                'loading'   => __( 'Loading...', 'ago-monitor' ),
-                'saved'     => __( 'Settings saved.', 'ago-monitor' ),
-                'error'     => __( 'An error occurred.', 'ago-monitor' ),
-                'cleared'   => __( '404 log cleared.', 'ago-monitor' ),
-                'sending'   => __( 'Sending report...', 'ago-monitor' ),
-                'sent'      => __( 'Report sent successfully.', 'ago-monitor' ),
-                'noEntries' => __( 'No 404 entries found.', 'ago-monitor' ),
+                'loading'      => __( 'Loading...', 'ago-monitor' ),
+                'saved'        => __( 'Settings saved.', 'ago-monitor' ),
+                'error'        => __( 'An error occurred.', 'ago-monitor' ),
+                'cleared'      => __( '404 log cleared.', 'ago-monitor' ),
+                'sending'      => __( 'Sending report...', 'ago-monitor' ),
+                'sent'         => __( 'Report handed to your site mail system.', 'ago-monitor' ),
+                'notSent'      => __( 'The report could not be sent. Check the email address and your site mail setup.', 'ago-monitor' ),
+                'sendNow'      => __( 'Send Report Now', 'ago-monitor' ),
+                'noEntries'    => __( 'No 404 entries found.', 'ago-monitor' ),
+                'confirmClear' => __( 'Clear all 404 log entries?', 'ago-monitor' ),
+                'php'          => __( 'PHP', 'ago-monitor' ),
+                'wordpress'    => __( 'WordPress', 'ago-monitor' ),
+                'database'     => __( 'Database server', 'ago-monitor' ),
+                /* translators: %d: number of database tables */
+                'tables'       => __( '%d tables', 'ago-monitor' ),
+                'uploads'      => __( 'Uploads folder', 'ago-monitor' ),
+                'wpFolder'     => __( 'WordPress folder', 'ago-monitor' ),
+                'sizesCached'  => __( 'Folder sizes are measured at most once an hour.', 'ago-monitor' ),
+                'upToDate'     => __( 'No pending plugin updates', 'ago-monitor' ),
+                'needUpdate'   => __( 'plugins with a newer version', 'ago-monitor' ),
+                'lastChecked'  => __( 'As last checked by WordPress.', 'ago-monitor' ),
+                'cronJobs'     => __( 'Cron Jobs', 'ago-monitor' ),
+                /* translators: %d: number of overdue cron events */
+                'overdueCount' => __( '%d overdue', 'ago-monitor' ),
+                /* translators: %d: number of scheduled cron events */
+                'eventCount'   => __( '%d events', 'ago-monitor' ),
+                'noCron'       => __( 'No cron events found.', 'ago-monitor' ),
+                'hook'         => __( 'Hook', 'ago-monitor' ),
+                'schedule'     => __( 'Schedule', 'ago-monitor' ),
+                'nextRun'      => __( 'Next run', 'ago-monitor' ),
+                'status'       => __( 'Status', 'ago-monitor' ),
+                /* translators: %s: human readable time, such as "3 hours" */
+                'inTime'       => __( 'in %s', 'ago-monitor' ),
+                /* translators: %s: human readable time, such as "3 hours" */
+                'agoTime'      => __( '%s ago', 'ago-monitor' ),
+                'onTime'       => __( 'On time', 'ago-monitor' ),
+                'overdue'      => __( 'Overdue', 'ago-monitor' ),
+                'url'          => __( 'URL', 'ago-monitor' ),
+                'referrer'     => __( 'Referrer', 'ago-monitor' ),
+                'date'         => __( 'Date', 'ago-monitor' ),
+                'ok'           => __( 'OK', 'ago-monitor' ),
+                'warning'      => __( 'Warning', 'ago-monitor' ),
+                'errorStatus'  => __( 'Error', 'ago-monitor' ),
             ],
         ] );
     }
@@ -231,7 +281,7 @@ class Plugin {
     public static function get_settings(): array {
         $defaults = [
             'enable_404_logging'   => true,
-            'enable_weekly_report' => true,
+            'enable_weekly_report' => false,
             'report_email'         => '',
             'autoload_warn_kb'     => 800,
         ];
@@ -249,14 +299,16 @@ class Plugin {
         ];
     }
 
-    /** @return array<int, array<string, string>> */
+    /**
+     * Plugins with a newer version, as WordPress itself last checked them.
+     * The plugin does not ask WordPress.org on its own.
+     *
+     * @return array<int, array<string, string>>
+     */
     public static function get_pending_updates(): array {
-        if ( ! function_exists( 'get_plugin_updates' ) ) {
-            require_once ABSPATH . 'wp-admin/includes/update.php';
-            require_once ABSPATH . 'wp-admin/includes/plugin.php';
-        }
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        require_once ABSPATH . 'wp-admin/includes/update.php';
 
-        wp_update_plugins();
         $updates = get_plugin_updates();
         $list    = [];
 

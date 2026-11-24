@@ -27,6 +27,16 @@
 
     function $(id) { return document.getElementById(id); }
 
+    function fmt(template, value) {
+        return String(template).replace(/%[ds]/, String(value));
+    }
+
+    function statusLabel(status) {
+        if (status === 'ok') return i18n.ok;
+        if (status === 'warning') return i18n.warning;
+        return i18n.errorStatus;
+    }
+
     function statusBadge(status, text) {
         return '<span class="ago-status-badge ago-status-' + status + '">' + esc(text) + '</span>';
     }
@@ -67,9 +77,9 @@
         var el = $('card-system');
         if (!el) return;
         el.querySelector('.ago-card-body').innerHTML =
-            '<div><strong>PHP:</strong> ' + esc(sys.php_version) + '</div>' +
-            '<div><strong>WordPress:</strong> ' + esc(sys.wp_version) + '</div>' +
-            '<div><strong>MySQL:</strong> ' + esc(sys.db_version) + '</div>';
+            '<div><strong>' + esc(i18n.php) + '</strong> ' + esc(sys.php_version) + '</div>' +
+            '<div><strong>' + esc(i18n.wordpress) + '</strong> ' + esc(sys.wp_version) + '</div>' +
+            '<div><strong>' + esc(i18n.database) + '</strong> ' + esc(sys.db_version) + '</div>';
         el.querySelector('.ago-card-body').classList.remove('ago-loading');
     }
 
@@ -86,7 +96,7 @@
         if (!el) return;
         el.querySelector('.ago-card-body').innerHTML =
             '<div class="ago-big-value">' + esc(db.size) + '</div>' +
-            '<div class="ago-sub-value">' + db.table_count + ' tables</div>';
+            '<div class="ago-sub-value">' + esc(fmt(i18n.tables, parseInt(db.table_count, 10) || 0)) + '</div>';
         el.querySelector('.ago-card-body').classList.remove('ago-loading');
     }
 
@@ -94,8 +104,9 @@
         var el = $('card-disk');
         if (!el) return;
         el.querySelector('.ago-card-body').innerHTML =
-            '<div><strong>Uploads:</strong> ' + esc(disk.uploads_size) + '</div>' +
-            '<div><strong>Total WP:</strong> ' + esc(disk.total_size) + '</div>';
+            '<div><strong>' + esc(i18n.uploads) + '</strong> ' + esc(disk.uploads_size) + '</div>' +
+            '<div><strong>' + esc(i18n.wpFolder) + '</strong> ' + esc(disk.total_size) + '</div>' +
+            '<div class="ago-sub-value">' + esc(i18n.sizesCached) + '</div>';
         el.querySelector('.ago-card-body').classList.remove('ago-loading');
     }
 
@@ -107,7 +118,7 @@
         el.querySelector('.ago-card-body').innerHTML =
             '<div class="ago-big-value">' + esc(al.size_kb + ' KB') + '</div>' +
             '<div class="ago-progress"><div class="ago-progress-bar ' + barClass + '" style="width:' + pct + '%"></div></div>' +
-            statusBadge(al.status, al.status.toUpperCase());
+            statusBadge(al.status, statusLabel(al.status));
         el.querySelector('.ago-card-body').classList.remove('ago-loading');
     }
 
@@ -118,18 +129,19 @@
         body.classList.remove('ago-loading');
 
         if (!updates || updates.length === 0) {
-            body.innerHTML = statusBadge('ok', 'All up to date');
+            body.innerHTML = statusBadge('ok', i18n.upToDate) +
+                '<div class="ago-sub-value">' + esc(i18n.lastChecked) + '</div>';
             return;
         }
 
         var html = '<div class="ago-big-value">' + updates.length + '</div>' +
-            '<div class="ago-sub-value" style="margin-bottom:8px">plugins need updating</div>' +
+            '<div class="ago-sub-value" style="margin-bottom:8px">' + esc(i18n.needUpdate) + '</div>' +
             '<ul class="ago-updates-list">';
         updates.forEach(function (p) {
             html += '<li>' + esc(p.name) + ' <span class="ago-version-arrow">' +
                 esc(p.current) + ' &rarr; ' + esc(p.new_version) + '</span></li>';
         });
-        html += '</ul>';
+        html += '</ul><div class="ago-sub-value">' + esc(i18n.lastChecked) + '</div>';
         body.innerHTML = html;
     }
 
@@ -138,11 +150,11 @@
         if (!el) return;
         var h3 = el.querySelector('h3');
         var badge = cron.overdue > 0
-            ? ' ' + statusBadge('warning', cron.overdue + ' overdue')
-            : ' ' + statusBadge('ok', cron.total + ' events');
+            ? ' ' + statusBadge('warning', fmt(i18n.overdueCount, cron.overdue))
+            : ' ' + statusBadge('ok', fmt(i18n.eventCount, cron.total));
 
         var caret = h3.querySelector('.ago-caret');
-        h3.innerHTML = 'Cron Jobs ' + badge + ' ';
+        h3.innerHTML = esc(i18n.cronJobs) + badge + ' ';
         if (caret) h3.appendChild(caret);
     }
 
@@ -152,19 +164,21 @@
 
         api('/cron').then(function (events) {
             if (!events || events.length === 0) {
-                container.innerHTML = '<p>No cron events found.</p>';
+                container.innerHTML = '<p>' + esc(i18n.noCron) + '</p>';
                 return;
             }
             var html = '<table class="ago-table"><thead><tr>' +
-                '<th>Hook</th><th>Schedule</th><th>Next Run</th><th>Status</th>' +
+                '<th>' + esc(i18n.hook) + '</th><th>' + esc(i18n.schedule) + '</th><th>' + esc(i18n.nextRun) + '</th><th>' + esc(i18n.status) + '</th>' +
                 '</tr></thead><tbody>';
             events.forEach(function (ev) {
-                var cls = ev.status === 'overdue' ? ' class="ago-overdue"' : '';
+                var late = ev.status === 'overdue';
+                var cls = late ? ' class="ago-overdue"' : '';
+                var when = ev.next_run * 1000 < Date.now() ? i18n.agoTime : i18n.inTime;
                 html += '<tr' + cls + '>' +
                     '<td>' + esc(ev.hook) + '</td>' +
                     '<td>' + esc(ev.schedule) + '</td>' +
-                    '<td>' + esc(ev.next_run_human) + (ev.status === 'overdue' ? ' ago' : '') + '</td>' +
-                    '<td>' + statusBadge(ev.status === 'overdue' ? 'error' : 'ok', ev.status) + '</td>' +
+                    '<td>' + esc(fmt(when, ev.next_run_human)) + '</td>' +
+                    '<td>' + statusBadge(late ? 'error' : 'ok', late ? i18n.overdue : i18n.onTime) + '</td>' +
                     '</tr>';
             });
             html += '</tbody></table>';
@@ -181,6 +195,7 @@
         container.innerHTML = '<div class="ago-loading">' + esc(i18n.loading) + '</div>';
 
         api('/404s?page=' + current404Page + '&per_page=20').then(function (data) {
+            container.classList.remove('ago-loading');
             if (!data.entries || data.entries.length === 0) {
                 container.innerHTML = '<p>' + esc(i18n.noEntries) + '</p>';
                 pagination.innerHTML = '';
@@ -188,12 +203,12 @@
             }
 
             var html = '<table class="ago-table"><thead><tr>' +
-                '<th>URL</th><th>Referrer</th><th>Date</th>' +
+                '<th>' + esc(i18n.url) + '</th><th>' + esc(i18n.referrer) + '</th><th>' + esc(i18n.date) + '</th>' +
                 '</tr></thead><tbody>';
             data.entries.forEach(function (entry) {
                 html += '<tr>' +
                     '<td class="ago-url" title="' + esc(entry.url) + '">' + esc(entry.url) + '</td>' +
-                    '<td class="ago-url" title="' + esc(entry.referrer) + '">' + esc(entry.referrer || ',') + '</td>' +
+                    '<td class="ago-url" title="' + esc(entry.referrer) + '">' + esc(entry.referrer) + '</td>' +
                     '<td style="white-space:nowrap">' + esc(entry.created_at) + '</td>' +
                     '</tr>';
             });
@@ -290,13 +305,13 @@
             reportBtn.disabled = true;
             reportBtn.textContent = i18n.sending;
             api('/report/send', { method: 'POST' }).then(function (resp) {
-                showStatus(resp.sent ? i18n.sent : i18n.error, resp.sent ? 'success' : 'error');
+                showStatus(resp.sent ? i18n.sent : i18n.notSent, resp.sent ? 'success' : 'error');
                 reportBtn.disabled = false;
-                reportBtn.textContent = 'Send Report Now';
+                reportBtn.textContent = i18n.sendNow;
             }).catch(function () {
                 showStatus(i18n.error, 'error');
                 reportBtn.disabled = false;
-                reportBtn.textContent = 'Send Report Now';
+                reportBtn.textContent = i18n.sendNow;
             });
         });
     }
@@ -304,7 +319,7 @@
     var clearBtn = $('ago-clear-404');
     if (clearBtn) {
         clearBtn.addEventListener('click', function () {
-            if (!confirm('Clear all 404 log entries?')) return;
+            if (!window.confirm(i18n.confirmClear)) return;
             api('/404s/clear', { method: 'POST' }).then(function (resp) {
                 if (resp.cleared) {
                     showStatus(i18n.cleared, 'success');

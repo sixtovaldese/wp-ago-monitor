@@ -9,13 +9,11 @@ delete_option( 'agomonitor_settings' );
 // Delete transients.
 delete_transient( 'agomonitor_disk_uploads' );
 delete_transient( 'agomonitor_disk_total' );
+delete_transient( 'agomonitor_404_cleanup' );
 
 // Drop 404 table.
-$table = $wpdb->prefix . 'agomonitor_404s';
-$wpdb->query( "DROP TABLE IF EXISTS {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+$agomonitor_table = $wpdb->prefix . 'agomonitor_404s'; // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedVariableFound
+$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $agomonitor_table ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange
 
 // Unschedule cron.
-$timestamp = wp_next_scheduled( 'agomonitor_weekly_report' );
-if ( $timestamp ) {
-    wp_unschedule_event( $timestamp, 'agomonitor_weekly_report' );
-}
+wp_clear_scheduled_hook( 'agomonitor_weekly_report' );

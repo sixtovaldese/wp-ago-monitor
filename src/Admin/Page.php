@@ -15,6 +15,10 @@ class Page {
                 <span style="font-size:12px;color:#999;margin-left:8px">v<?php echo esc_html( AGOMONITOR_VERSION ); ?></span>
             </h1>
 
+            <p class="description">
+                <?php esc_html_e( 'Everything on this screen is measured by this site, on its own server, each time the screen loads. It cannot tell you when the site is down: for that, use an uptime service that checks it from outside.', 'ago-monitor' ); ?>
+            </p>
+
             <div id="ago-monitor-status" style="display:none"></div>
 
             <div class="ago-layout">
@@ -37,7 +41,7 @@ class Page {
                         </div>
 
                         <div class="card ago-card ago-check-card" id="card-disk">
-                            <h3><?php esc_html_e( 'Disk Usage', 'ago-monitor' ); ?></h3>
+                            <h3><?php esc_html_e( 'Folder Sizes', 'ago-monitor' ); ?></h3>
                             <div class="ago-card-body ago-loading"><?php esc_html_e( 'Loading...', 'ago-monitor' ); ?></div>
                         </div>
 
@@ -82,7 +86,7 @@ class Page {
                             <label class="ago-toggle-row">
                                 <span class="ago-toggle-label">
                                     <strong><?php esc_html_e( '404 Logging', 'ago-monitor' ); ?></strong>
-                                    <span class="ago-toggle-desc"><?php esc_html_e( 'Log URLs that trigger 404 errors', 'ago-monitor' ); ?></span>
+                                    <span class="ago-toggle-desc"><?php esc_html_e( 'Keep the address, referrer and time of each 404 for 30 days. No IP address or browser data is stored.', 'ago-monitor' ); ?></span>
                                 </span>
                                 <span class="ago-switch">
                                     <input type="checkbox" data-setting="enable_404_logging">
@@ -93,7 +97,7 @@ class Page {
                             <label class="ago-toggle-row">
                                 <span class="ago-toggle-label">
                                     <strong><?php esc_html_e( 'Weekly Report', 'ago-monitor' ); ?></strong>
-                                    <span class="ago-toggle-desc"><?php esc_html_e( 'Send a health report email every week', 'ago-monitor' ); ?></span>
+                                    <span class="ago-toggle-desc"><?php esc_html_e( 'Email a health summary once a week. It is sent by WP-Cron, so it needs the site to be up and receiving visits or a server cron.', 'ago-monitor' ); ?></span>
                                 </span>
                                 <span class="ago-switch">
                                     <input type="checkbox" data-setting="enable_weekly_report">
@@ -134,22 +138,29 @@ class Page {
                 <div class="ago-sidebar">
 
                     <div class="card ago-card">
+                        <h3><?php esc_html_e( 'Quick links', 'ago-monitor' ); ?></h3>
+                        <ul class="ago-features ago-links">
+                            <li><a href="https://ago.cl/herramientas/wordpress/ago-monitor/docs/" target="_blank" rel="noopener"><?php esc_html_e( 'Documentation', 'ago-monitor' ); ?></a></li>
+                            <li><a href="<?php echo esc_url( admin_url( 'site-health.php' ) ); ?>"><?php esc_html_e( 'WordPress Site Health', 'ago-monitor' ); ?></a></li>
+                            <li><a href="https://www.ssllabs.com/ssltest/" target="_blank" rel="noopener"><?php esc_html_e( 'SSL test (SSL Labs)', 'ago-monitor' ); ?></a></li>
+                            <li><a href="https://developer.wordpress.org/plugins/cron/hooking-wp-cron-into-the-system-task-scheduler/" target="_blank" rel="noopener"><?php esc_html_e( 'Run WP-Cron from a server cron', 'ago-monitor' ); ?></a></li>
+                        </ul>
+                    </div>
+
+                    <div class="card ago-card">
                         <h3><?php esc_html_e( 'About', 'ago-monitor' ); ?></h3>
                         <p style="font-size:13px;color:#666">
-                            <?php esc_html_e( 'Site health monitoring dashboard. Check SSL, disk, database, cron jobs, autoloaded options, and track 404 errors.', 'ago-monitor' ); ?>
+                            <?php esc_html_e( 'A health dashboard measured from inside your site, plus an optional weekly email with the same figures. No account and no external service.', 'ago-monitor' ); ?>
                         </p>
                         <ul class="ago-features">
-                            <li><?php esc_html_e( 'SSL certificate expiry check', 'ago-monitor' ); ?></li>
-                            <li><?php esc_html_e( 'Database & disk usage', 'ago-monitor' ); ?></li>
-                            <li><?php esc_html_e( 'Cron job inspector', 'ago-monitor' ); ?></li>
-                            <li><?php esc_html_e( 'Autoloaded options monitor', 'ago-monitor' ); ?></li>
-                            <li><?php esc_html_e( '404 error logger', 'ago-monitor' ); ?></li>
-                            <li><?php esc_html_e( 'Weekly email health report', 'ago-monitor' ); ?></li>
+                            <li><?php esc_html_e( 'Days left on the SSL certificate', 'ago-monitor' ); ?></li>
+                            <li><?php esc_html_e( 'Overdue cron events', 'ago-monitor' ); ?></li>
+                            <li><?php esc_html_e( 'Autoloaded options weight', 'ago-monitor' ); ?></li>
+                            <li><?php esc_html_e( 'Database and folder sizes', 'ago-monitor' ); ?></li>
+                            <li><?php esc_html_e( '404 log without visitor data', 'ago-monitor' ); ?></li>
+                            <li><?php esc_html_e( 'Weekly email, opt-in', 'ago-monitor' ); ?></li>
+                            <li><?php esc_html_e( 'Completely free, no Pro tier.', 'ago-monitor' ); ?></li>
                         </ul>
-                        <a href="https://ago.cl/herramientas/wordpress/ago-monitor/docs" class="button" target="_blank" rel="noopener" style="margin-top:8px">
-                            <span class="dashicons dashicons-book" style="margin-right:4px;vertical-align:text-bottom"></span>
-                            <?php esc_html_e( 'Documentation', 'ago-monitor' ); ?>
-                        </a>
                     </div>
 
                     <div class="card ago-card ago-donation">

@@ -2,15 +2,15 @@
 /**
  * Plugin Name: aGo Monitor
  * Plugin URI:  https://ago.cl/herramientas/
- * Description: Site health monitoring dashboard with SSL checks, disk usage, database size, cron inspector, autoloaded options, 404 logger and weekly email reports.
+ * Description: Site health dashboard measured from inside your site: SSL expiry, database and folder sizes, overdue cron events, autoloaded options, pending updates, a 404 log and an optional weekly email.
  * Version:     1.0.0
- * Requires at least: 6.0
+ * Requires at least: 6.2
  * Requires PHP: 8.1
  * Author:      aGo Lab
  * Author URI:  https://ago.cl/
  * License:     GPL-2.0-or-later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: ago-monitor
- * Domain Path: /languages
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -38,7 +38,7 @@ register_activation_hook( __FILE__, function () {
     require_once AGOMONITOR_PATH . 'src/Logger404.php';
     AgoLab\Monitor\Logger404::create_table();
 
-    // Schedule weekly report cron if enabled.
+    // The weekly email is opt-in: schedule it only if a saved setting asks for it.
     require_once AGOMONITOR_PATH . 'src/Plugin.php';
     $settings = AgoLab\Monitor\Plugin::get_settings();
     if ( $settings['enable_weekly_report'] && ! wp_next_scheduled( 'agomonitor_weekly_report' ) ) {
@@ -47,10 +47,7 @@ register_activation_hook( __FILE__, function () {
 } );
 
 register_deactivation_hook( __FILE__, function () {
-    $timestamp = wp_next_scheduled( 'agomonitor_weekly_report' );
-    if ( $timestamp ) {
-        wp_unschedule_event( $timestamp, 'agomonitor_weekly_report' );
-    }
+    wp_clear_scheduled_hook( 'agomonitor_weekly_report' );
 } );
 
 // Boot

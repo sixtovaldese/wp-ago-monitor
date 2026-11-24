@@ -14,6 +14,7 @@ class Database {
     public static function check(): array {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- a live measurement; no API returns table sizes.
         $results     = $wpdb->get_results( 'SHOW TABLE STATUS', ARRAY_A );
         $total_bytes = 0;
         $table_count = 0;

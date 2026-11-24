@@ -29,7 +29,7 @@ class Disk {
 
         return [
             'status'        => 'ok',
-            'label'         => __( 'Disk Usage', 'ago-monitor' ),
+            'label'         => __( 'Folder Sizes', 'ago-monitor' ),
             'uploads_size'  => size_format( (int) $uploads_bytes, 2 ),
             'uploads_bytes' => (int) $uploads_bytes,
             'total_size'    => size_format( (int) $total_bytes, 2 ),
